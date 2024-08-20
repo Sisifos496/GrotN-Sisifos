@@ -3,12 +3,14 @@ from django.shortcuts import render, redirect
 from django.db.models import Func, F, Q
 
 from landlord.models import House, Housing
+from tenant.models import Shortlist
 from authentication.models import Tenant
 from .models import Swipe, Match
 
 from django.conf import settings
 from django.http.response import JsonResponse
 from django.views.decorators.csrf import csrf_exempt 
+from django.shortcuts import render, get_object_or_404, redirect
 
 from django.contrib.auth.decorators import login_required
 
@@ -145,31 +147,34 @@ def matches(request):
 def housing(request):
     if "tenant" not in request.user.first_name: 
         return redirect('landlord:houses')
-    
-    housings = Housing.objects.filter(
-        Q(tenants__tenant1__user=request.user) | 
-        Q(tenants__tenant2__user=request.user),
-        approved=True)
+
+    # Fetch the shortlist based on the correct field name
+    housings = Shortlist.objects.filter(user=request.user).select_related('house')
 
     if request.method == 'POST':
-        match_id = request.POST.get('id')
-        housing = Housing.objects.filter(match_id=match_id).first()
-        if 'cancel' in request.POST:
-            housing.active = housing.approved
-            housing.approved = False
-            housing.save()
+        house_id = request.POST.get('id')
+        shortlisted_house = Shortlist.objects.filter(house_id=house_id, user=request.user).first()
+        house = shortlisted_house.house if shortlisted_house else None
 
-        print(housing)
-        
+        if house and 'cancel' in request.POST:
+            house.active = house.approved
+            house.approved = False
+            house.save()
+
         return redirect('tenant:housing')
 
     return render(request, 'tenant/housing.html', {'housings': housings})
+
 
 # No need to be logged in to view a house
 def view_house(request, house_id):
     # landlords can also view a house, so no logic here
     
     house = House.objects.filter(house_id=house_id).first()
+
+    if not house:
+        return redirect('tenant:matches')
+
     landlord = house.landlord
     other_houses = House.objects.filter(landlord=landlord).exclude(house_id=house_id).order_by('?')[:3]
 
@@ -218,3 +223,11 @@ def create_checkout_session(request):
         except Exception as e:
             print(e)
             return JsonResponse({'error': str(e)})
+        
+
+def shortlist_house(request, house_id):
+    house = get_object_or_404(House, house_id=house_id)
+    # Check if the house is already shortlisted
+    if not Shortlist.objects.filter(user=request.user, house=house).exists():
+        Shortlist.objects.create(user=request.user, house=house)
+    return redirect('housing')

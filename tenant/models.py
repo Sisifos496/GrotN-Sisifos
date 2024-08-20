@@ -1,5 +1,6 @@
 from django.db import models
 from authentication.models import Tenant
+from landlord.models import House
 
 import uuid
 
@@ -64,3 +65,11 @@ class Match(models.Model):
     
     class Meta:
         verbose_name_plural = "Matches"
+
+class Shortlist(models.Model):
+    user = models.ForeignKey(Tenant, on_delete=models.CASCADE)
+    house = models.ForeignKey(House, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'house')
+        
