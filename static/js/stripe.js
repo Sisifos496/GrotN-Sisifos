@@ -1,9 +1,9 @@
 console.log("Sanity check!")
 
 // # PRODUCTION: Change selector to .rentBtn for it to work!
-let rentButtons = document.querySelectorAll(".rentBtn123");
+let rentButtons = document.querySelectorAll(".rentBtn");
 
-fetch("/tenant/config/")
+fetch("/tenant/stripe_config/")
 .then((result) => { return result.json(); })
 .then((data) => {
     // Initialize Stripe.js

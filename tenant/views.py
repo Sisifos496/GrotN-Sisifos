@@ -148,12 +148,12 @@ def housing(request):
     if "tenant" not in request.user.first_name: 
         return redirect('landlord:houses')
 
-    # Fetch the shortlist based on the correct field name
-    housings = Shortlist.objects.filter(user=request.user).select_related('house')
+    tenant = get_object_or_404(Tenant, user=request.user)
+    housings = Shortlist.objects.filter(user=tenant).select_related('house')
 
     if request.method == 'POST':
         house_id = request.POST.get('id')
-        shortlisted_house = Shortlist.objects.filter(house_id=house_id, user=request.user).first()
+        shortlisted_house = Shortlist.objects.filter(house_id=house_id, user=tenant).first()
         house = shortlisted_house.house if shortlisted_house else None
 
         if house and 'cancel' in request.POST:
@@ -227,7 +227,12 @@ def create_checkout_session(request):
 
 def shortlist_house(request, house_id):
     house = get_object_or_404(House, house_id=house_id)
-    # Check if the house is already shortlisted
-    if not Shortlist.objects.filter(user=request.user, house=house).exists():
-        Shortlist.objects.create(user=request.user, house=house)
-    return redirect('housing')
+    
+    # Fetch the tenant instance for the logged-in user
+    tenant = get_object_or_404(Tenant, user=request.user)
+    
+    # Check if the house is already shortlisted by this tenant
+    if not Shortlist.objects.filter(user=tenant, house=house).exists():
+        Shortlist.objects.create(user=tenant, house=house)
+    
+    return redirect('tenant:housing')
