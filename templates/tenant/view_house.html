@@ -74,6 +74,7 @@
               <label class="property-price-payment" for="option2">
                 <span class="price">${{ house.price|floatformat:0 }} / month</span>
               </label>
+              <a href="{% url 'tenant:shortlist_house' house_id=house.house_id %}">Shortlist this House</a>           
             </div>
           </div>
           {% if house.additional_info %}

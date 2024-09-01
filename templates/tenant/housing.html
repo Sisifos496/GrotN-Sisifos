@@ -121,17 +121,20 @@
             {% else %}
             <input style="min-width: 48%;" type="text" class="form-control w-auto d-inline-block" disabled value="{{ housing.tenants.tenant1.fullName }} and {{ housing.tenants.tenant2.fullName }}">
             {% endif %}
-            <button class="btn d-inline-block btn-error"
-              style="min-width: 24%;"
-              type="submit"
-              name="cancel">
-              Cancel
-            </button>
             <button class="btn d-inline-block rentBtn"
             style="min-width: 24%;">
               Rent
             </button>
-            <input type="hidden" value="{{ housing.match_id }}" name="id">
+            <input type="hidden" name="id" value="{{ housing.house_id }}" name="id">
+          </form>
+          <form method="POST" action="{% url 'tenant:remove_shortlisted_house' housing.house.house_id %}">
+            {% csrf_token %}
+            <div>
+              <p>{{ housing.house.name }}</p>
+              <button class="btn d-inline-block btn-error" type="submit">
+                Cancel
+              </button>
+            </div>
           </form>
         </div>
 
